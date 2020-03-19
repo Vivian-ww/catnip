@@ -6,9 +6,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CacheData {
 	
-	//»º´æ¶ÔÏó
+	//ç¼“å­˜å¯¹è±¡
 	Map<String, Object> cacheData = new HashMap<String, Object>(); 
-	//¶ÁĞ´Ëø 
+	//è¯»å†™é” 
 	ReentrantReadWriteLock rwl = new ReentrantReadWriteLock(); 
 	 
 	public static void main(String[] args) {  
@@ -17,17 +17,19 @@ public class CacheData {
 	  
 	public Object getData(String key){  
 		Object value = null;
-		//¼Ó¶ÁËø 
+		//åŠ è¯»é” 
 		rwl.readLock().lock(); 
-		value = cacheData.get(key);//»ñÈ¡Öµ  
-		if(value == null){//ÅĞ¶ÏÊÇ·ñ´æÔÚÖµ  
+		value = cacheData.get(key);//è·å–å€¼  
+		//åŠ å†™é”
+		rwl.writeLock().lock();
+		if(value == null){//åˆ¤æ–­æ˜¯å¦å­˜åœ¨å€¼  
 			cacheData.put(key, value);
 			
 		}
 
-		//¹ØĞ´Ëø
+		//å…³å†™é”
 		rwl.writeLock().unlock();
-		//¹Ø¶ÁËø 
+		//å…³è¯»é” 
 		rwl.readLock().lock(); 
 			 
 		return value;
