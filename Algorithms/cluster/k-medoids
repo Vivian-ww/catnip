@@ -1,0 +1,99 @@
+# -*- coding: utf-8 -*-
+# @Time    : 20-08-26
+# @Author  : WenWen
+
+from sklearn.datasets import make_blobs
+from matplotlib import pyplot
+import numpy as np
+import random
+from mpl_toolkits.mplot3d import Axes3D
+
+    
+# 定义欧式距离的计算    
+def euclidean_distance(x, y):
+    return np.sqrt(sum(np.square(x - y)))
+
+
+class KMediod():
+    """
+    实现简单的k-medoid算法
+    """
+
+    def __init__(self, k, max_iterations =500, alpha = 0.01):
+        self.k = k
+        self.max_iterations = max_iterations
+        self.alpha = alpha
+    
+    def get_cluster(self, X, centroids):
+        """
+        :X: 数据
+        :centroids:中心点
+        :return:样本的类别
+        """
+        clusters = [[] for _ in range(self.k)]
+        for sample in X:
+            ds = [euclidean_distance(sample, centroid) for centroid in centroids]  # 求样本点与个中心点的距离
+            target = np.argmin(ds)  # 返回最小距离的下标，表示初始的类别
+            clusters[target].append(sample)
+        return clusters
+    
+    def get_cost(self, clusters, centroids):
+        cost = 0
+        # For each cluster
+        for i, cluster in enumerate(clusters):
+            centroid = centroids[i]
+            cost += sum([euclidean_distance(centroid, point) for point in cluster])
+        return cost
+
+    def fit(self, data):
+        """
+        :data: 数据
+        :return:样本的类别
+        """
+        # 规范数据集
+        X = np.array(data)
+        
+        # 随机选择初始中心点
+        indexs = list(range(len(X)))
+        random.shuffle(indexs)  # 随机打乱index顺序
+        init_centroids_index = indexs[:self.k]  # 选择前k个作为质心
+        centroids = X[init_centroids_index, :]  # 初始中心点
+        print('初始中心点分别为', [centroids[i] for i in range(self.k)])
+        
+        # 划分数据初始聚类，求初始代价函数
+        clusters = self.get_cluster(X, centroids)
+        init_cost = self.get_cost(clusters, centroids)
+        
+        # 开始迭代
+        print('-----开始迭代------')
+        for n in range(self.max_iterations):
+            best_centroids = centroids
+            lowest_cost = init_cost
+            
+            # 重新划分质心
+            for centroid in centroids:
+                for sample in X:
+                    # 新中心点
+                    new_centroids =  centroids.copy()
+                    new_centroids[centroids==centroid] = sample
+                    # 新簇类划分
+                    new_clusters = self.get_cluster(X, new_centroids)
+                    # 新的代价函数
+                    new_cost = self.get_cost(new_clusters, new_centroids)
+                    # 计算出该聚簇中各个点与其他所有点的总和，若是有小于当前中心点的距离总和的，中心点去掉
+                    if new_cost < lowest_cost:        
+                        print(sample,'替换',centroid)
+                        lowest_cost = new_cost
+                        best_centroids = new_centroids  # 换成该点
+            if lowest_cost < init_cost:
+                init_cost = lowest_cost
+                centroids = best_centroids
+            else:
+                break
+                
+        print('迭代结束中心点分别为', [centroids[i] for i in range(self.k)])
+        
+        # 根据最后中心点划分簇
+        finally_clusters = self.get_cluster(X, centroids)
+        
+        return finally_clusters
